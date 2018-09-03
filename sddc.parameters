@@ -1,0 +1,11 @@
+{
+	"dns": "172.16.0.1",
+	"domain": "lab",
+	"endpoints": [
+		{
+			"type": "vmc",
+			"token": "<refresh-token>",
+			"online": "true"
+		}
+	]
+}

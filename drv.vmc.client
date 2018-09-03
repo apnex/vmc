@@ -1,0 +1,71 @@
+#!/bin/bash
+DOMAIN=$(cat sddc.parameters | jq -r '.domain')
+VMCTOKEN=$(cat sddc.parameters | jq -r '.endpoints[] | select(.type=="vmc").token')
+VMCONLINE=$(cat sddc.parameters | jq -r '.endpoints[] | select(.type=="vmc").online')
+VMCSESSION='state/vmc.csp-auth-token'
+if [ ! -d state ]; then
+	mkdir state;
+fi
+
+# Login with Refresh token and store Access token for future calls
+function vmcLogin {
+	URL="https://console.cloud.vmware.com/csp/gateway/am/api/auth/api-tokens/authorize"
+	AUTH_RESPONSE=$(curl -s -X POST \
+		-H "accept: application/json" \
+		-H "content-type: application/x-www-form-urlencoded" \
+		-d "refresh_token=$VMCTOKEN" \
+	$URL)
+	ACCESS_TOKEN=$(echo $AUTH_RESPONSE | awk -F '"access_token":"' '{print $2}' | awk -F '","' '{print $1}')
+	printf "%s\n" "${ACCESS_TOKEN}"
+}
+
+function vmcSession {
+	if [[ "$VMCONLINE" == "true" ]]; then
+		if [ -f $VMCSESSION ]; then
+			local MYDATE=$(stat -c %y "$VMCSESSION")
+			local LAPSE="$(($(date '+%s') - $(date -d "$MYDATE" '+%s')))"
+			if [ "$LAPSE" -ge 600 ]; then
+				printf "Session older than [600] seconds, reauthenticating...\n" 1>&2
+				vmcLogin >"$VMCSESSION"
+			fi
+		else
+			printf "File [$VMCSESSION] does not exist - authenticating...\n" 1>&2
+			vmcLogin >"$VMCSESSION"
+		fi
+	fi
+}
+
+function vmcGet {
+	local URL=${1}
+	if [[ "$VMCONLINE" == "true" ]]; then
+		#STATE=$(getFile "${URL}")
+		STATE='state/sddc.list.json'
+		RESPONSE=$(curl -s -w "%{http_code}" -X GET \
+			-H "Content-Type: application/json" \
+			-H "csp-auth-token: $(cat $VMCSESSION)" \
+		"$URL" 2>/dev/null)
+		RESULT=$(isSuccess "${RESPONSE}")
+	else
+		printf "[$(ccyan "OFFLINE")] - SUCCESS\n" 1>&2
+		RESULT=$(cat "${URL}")
+		STATE="${URL}"
+	fi
+	printf "%s\n" "${RESULT}" | jq --tab . >"${STATE}"
+	printf "%s\n" "${RESULT}" | jq --tab .
+}
+
+function vmcPost {
+	local URL=${1}
+	local BODY=${2}
+	if [[ "$VMCONLINE" == "true" ]]; then
+		RESPONSE=$(curl -s -w "%{http_code}" -X POST \
+			-H "Content-Type: application/json" \
+			-H "csp-auth-token: $(cat $VMCSESSION)" \
+			-d "$BODY" \
+		"$URL" 2>/dev/null)
+		RESULT=$(isSuccess "${RESPONSE}")
+	else
+		printf "[$(ccyan "OFFLINE")] - SUCCESS\n" 1>&2
+	fi
+	printf "%s\n" "${RESULT}" | jq --tab .
+}

@@ -1,0 +1,16 @@
+{
+	"account_link_config": {
+		"delay_account_link": true
+	},
+	"deployment_type": "SingleAZ",
+	"name": "testSDDC",
+	"num_hosts": 1,
+	"provider": "AWS",
+	"region": "AP_SOUTHEAST_2",
+	"sddc_template_id": null,
+	"sddc_type": "1NODE",
+	"sso_domain": "vmc.local",
+	"vpc_cidr": "172.16.20.0/23",
+	"nsxt_csp_mode": true,
+	"vxlan_subnet": "192.168.1.0/24"
+}
