@@ -23,6 +23,7 @@ git clone https://github.com/apnex/vmc
 #### 3: Set up SDDC parameters
 Modify the `sddc.parameters` file to reflect the parameters for your lab.
 Configure the VMC Console `endpoint` with a newly generated REFRESH_TOKEN from your "My Account -> API Tokens -> New Token".  
+Configure current working `org`.  
 For endpoint type `vmc` - `domain` and `dns` parameters will be ignored.  
 ```json
 {
@@ -31,6 +32,7 @@ For endpoint type `vmc` - `domain` and `dns` parameters will be ignored.
 	"endpoints": [
 		{
 			"type": "vmc",
+			"org": "<org-uuid>",
 			"token": "<refresh-token>",
 			"online": "true"
 		}
@@ -59,5 +61,5 @@ i.e `./sddc.list.sh json` will bypass table formatting and show raw JSON for SDD
 ```shell
 ./sddc.delete.sh <sddc-id>
 # example
-./sddc.delete.sh a73851a4-4262-4308-81cc-af261c00f3f2
+./sddc.delete.sh a73851a4-4262-4308-81cc-af261c20f3f2
 ```

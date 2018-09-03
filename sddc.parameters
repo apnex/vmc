@@ -4,6 +4,7 @@
 	"endpoints": [
 		{
 			"type": "vmc",
+			"org": "<org-uuid>",
 			"token": "<refresh-token>",
 			"online": "true"
 		}
