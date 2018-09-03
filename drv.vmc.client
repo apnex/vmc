@@ -69,3 +69,21 @@ function vmcPost {
 	fi
 	printf "%s\n" "${RESULT}" | jq --tab .
 }
+
+function vmcDelete {
+	local URL=${1}
+	local BODY=${2}
+	if [[ "$VMCONLINE" == "true" ]]; then
+		#STATE=$(getFile "${URL}")
+		RESPONSE=$(curl -s -w "%{http_code}" -G -X DELETE \
+			-H "Content-Type: application/json" \
+			-H "csp-auth-token: $(cat $VMCSESSION)" \
+			--data-urlencode "$BODY" \
+		"$URL" 2>/dev/null)
+		RESULT=$(isSuccess "${RESPONSE}")
+	else
+		printf "[$(ccyan "OFFLINE")] - SUCCESS\n" 1>&2
+	fi
+	#work out state synch for deletes
+	printf "%s\n" "${RESULT}" | jq --tab .
+}
