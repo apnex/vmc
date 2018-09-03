@@ -2,6 +2,7 @@
 source drv.core
 source drv.vmc.client
 SDDCSPEC=${1}
+VMCORG="decf0b75-dd3c-4d70-ab52-646f55053356"
 
 function makeBody {
 	BODY=$(cat "${1}")
@@ -14,7 +15,7 @@ if [[ -n "${SDDCSPEC}" ]]; then
 		echo "$BODY"
 		ITEM="sddc"
 		CALL=""
-		URL=$(buildURL "orgs/decf0b75-dd3c-4d70-ab52-646f55053356/sddcs")
+		URL=$(buildURL "orgs/${VMCORG}/sddcs")
 		if [[ -n "${URL}" ]]; then
 			printf "[$(cgreen "INFO")]: vmc [$(cgreen "sddc.create")] ${ITEM} [$(cgreen "${URL}")]... " 1>&2
 			vmcPost "${URL}" "${BODY}"

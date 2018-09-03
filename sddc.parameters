@@ -4,7 +4,7 @@
 	"endpoints": [
 		{
 			"type": "vmc",
-			"token": "<refresh-token>",
+			"token": "e89f7156-cf17-4643-b7f7-1eee0493bc66",
 			"online": "true"
 		}
 	]
