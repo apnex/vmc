@@ -3,8 +3,7 @@ source drv.core
 source drv.vmc.client
 
 SDDCID=${1}
-VMCORG="decf0b75-dd3c-4d70-ab52-646f55053356"
-if [[ -n "${VMCTOKEN}" ]]; then
+if [[ -n "${VMCTOKEN}" && -n "${VMCORG}" ]]; then
 	ITEM="task"
 	#CALL="/${SDDCID}"
 	#URL=$(buildURL "${ITEM}${CALL}")

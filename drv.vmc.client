@@ -1,6 +1,7 @@
 #!/bin/bash
 DOMAIN=$(cat sddc.parameters | jq -r '.domain')
 VMCTOKEN=$(cat sddc.parameters | jq -r '.endpoints[] | select(.type=="vmc").token')
+VMCORG=$(cat sddc.parameters | jq -r '.endpoints[] | select(.type=="vmc").org')
 VMCONLINE=$(cat sddc.parameters | jq -r '.endpoints[] | select(.type=="vmc").online')
 VMCSESSION='state/vmc.csp-auth-token'
 if [ ! -d state ]; then

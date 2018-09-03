@@ -5,7 +5,7 @@ PAYLOAD=$(./drv.task.list.sh)
 read -r -d '' JQSPEC <<CONFIG
 	. |
 		["id", "task_type", "estimated_remaining_minutes", "progress_percent", "status", "sub_status"]
-		,["-----", "-----", "-----", "-----", "-----"]
+		,["-----", "-----", "-----", "-----", "-----", "-----"]
 		,(.[] | [.id, .task_type, .estimated_remaining_minutes, .progress_percent, .status, .sub_status])
 	| @csv
 CONFIG

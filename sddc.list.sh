@@ -5,7 +5,7 @@ PAYLOAD=$(./drv.sddc.list.sh)
 read -r -d '' JQSPEC <<CONFIG
 	. |
 		["id", "name", "sddc_type", "region", "sddc_state", "created"]
-		,["-----", "-----", "-----", "-----"]
+		,["-----", "-----", "-----", "-----", "-----", "-----"]
 		,(.[] | [.id, .name, .sddc_type, .resource_config.region, .sddc_state, .created])
 	| @csv
 CONFIG

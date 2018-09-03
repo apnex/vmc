@@ -2,7 +2,6 @@
 source drv.core
 source drv.vmc.client
 SDDCSPEC=${1}
-VMCORG="decf0b75-dd3c-4d70-ab52-646f55053356"
 
 function makeBody {
 	BODY=$(cat "${1}")
@@ -10,7 +9,7 @@ function makeBody {
 }
 
 if [[ -n "${SDDCSPEC}" ]]; then
-	if [[ -n "${VMCTOKEN}" ]]; then
+	if [[ -n "${VMCTOKEN}" && -n "${VMCORG}" ]]; then
 		BODY=$(makeBody "${SDDCSPEC}")
 		echo "$BODY"
 		ITEM="sddc"
