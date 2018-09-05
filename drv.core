@@ -1,16 +1,13 @@
 #!/bin/bash
 
-#get OSNAME and set standardised date/stat
+# get OSNAME
 OSNAME="$(uname -s)"
 case "${OSNAME}" in
 	Linux*)
-
-		printf "HAHA you run ${OSNAME}\n" 1>&2
+		#printf "HAHA you run ${OSNAME}\n" 1>&2
 	;;
 	Darwin*)
-		alias date='gdate'
-		alias stat='gstat'
-		printf "HAHA you run a ${OSNAME}\n" 1>&2
+		#printf "HAHA you run a ${OSNAME}\n" 1>&2
 	;;
 esac
 

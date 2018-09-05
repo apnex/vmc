@@ -15,14 +15,14 @@ apt-get install curl jq
 ```
 
 ##### Mac OSX
-Install brew.
+Install brew
 ```shell
 ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)" < /dev/null 2> /dev/null
 ```
 
-Install curl/jq/coreutils
+Install curl & jq
 ```shell
-brew install curl jq coreutils
+brew install curl jq
 ```
 
 #### 2: Clone repository from GitHub
@@ -74,4 +74,9 @@ i.e `./sddc.list.sh json` will bypass table formatting and show raw JSON for SDD
 ./sddc.delete.sh <sddc-id>
 # example
 ./sddc.delete.sh a73851a4-4262-4308-81cc-af261c20f3f2
+```
+
+##### task.list: Show tasks
+```shell
+./task.list.sh [json]
 ```

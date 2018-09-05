@@ -23,9 +23,8 @@ function vmcLogin {
 function vmcSession {
 	if [[ "$VMCONLINE" == "true" ]]; then
 		if [ -f $VMCSESSION ]; then
-			local MYDATE=$(stat -c %y "$VMCSESSION")
-			local LAPSE="$(($(date '+%s') - $(date -d "$MYDATE" '+%s')))"
-			if [ "$LAPSE" -ge 600 ]; then
+			local RUNFIND="$(find ${VMCSESSION} -cmin +10)"
+			if [ -n "$RUNFIND" ]; then
 				printf "Session older than [600] seconds, reauthenticating...\n" 1>&2
 				vmcLogin >"$VMCSESSION"
 			fi
