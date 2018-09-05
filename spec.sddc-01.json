@@ -3,7 +3,7 @@
 		"delay_account_link": true
 	},
 	"deployment_type": "SingleAZ",
-	"name": "testSDDC",
+	"name": "afpSDDC",
 	"num_hosts": 1,
 	"provider": "AWS",
 	"region": "AP_SOUTHEAST_2",

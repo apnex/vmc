@@ -1,5 +1,19 @@
 #!/bin/bash
 
+#get OSNAME and set standardised date/stat
+OSNAME="$(uname -s)"
+case "${OSNAME}" in
+	Linux*)
+
+		printf "HAHA you run ${OSNAME}\n" 1>&2
+	;;
+	Darwin*)
+		alias date='gdate'
+		alias stat='gstat'
+		printf "HAHA you run a ${OSNAME}\n" 1>&2
+	;;
+esac
+
 # COLOURS
 NC='\033[0m' # no colour
 BLACK='\033[0;30m' # black

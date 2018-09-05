@@ -14,6 +14,17 @@ yum install curl jq
 apt-get install curl jq
 ```
 
+##### Mac OSX
+Install brew.
+```shell
+ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)" < /dev/null 2> /dev/null
+```
+
+Install curl/jq/coreutils
+```shell
+brew install curl jq coreutils
+```
+
 #### 2: Clone repository from GitHub
 Perform the following command to download the scripts - this will create a directory `vmc` on your local machine
 ```shell
@@ -23,7 +34,8 @@ git clone https://github.com/apnex/vmc
 #### 3: Set up SDDC parameters
 Modify the `sddc.parameters` file to reflect the parameters for your lab.
 Configure the VMC Console `endpoint` with a newly generated REFRESH_TOKEN from your "My Account -> API Tokens -> New Token".  
-Configure current working `org` - all command will be executed within this context.  
+Configure current working `org` with its *uuid*- all command will be executed within this context.  
+You can get a list of orgs for your account by issuing the `org.list` command.  
 For endpoint type `vmc` - `domain` and `dns` parameters will be ignored.  
 ```json
 {
