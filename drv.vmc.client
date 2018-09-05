@@ -8,7 +8,7 @@ if [ ! -d state ]; then
 	mkdir state;
 fi
 
-# Login with Refresh token and store Access token for future calls
+# Login with refresh-token and store Access token for future calls
 function vmcLogin {
 	URL="https://console.cloud.vmware.com/csp/gateway/am/api/auth/api-tokens/authorize"
 	AUTH_RESPONSE=$(curl -s -X POST \
@@ -21,16 +21,18 @@ function vmcLogin {
 }
 
 function vmcSession {
-	if [[ "$VMCONLINE" == "true" ]]; then
-		if [ -f $VMCSESSION ]; then
-			local RUNFIND="$(find ${VMCSESSION} -cmin +10)"
+	local SESSION=$VMCSESSION
+	local ONLINE=$VMCONLINE
+	if [[ "$ONLINE" == "true" ]]; then
+		if [ -f $SESSION ]; then
+			local RUNFIND="$(find ${SESSION} -cmin +10)"
 			if [ -n "$RUNFIND" ]; then
 				printf "Session older than [600] seconds, reauthenticating...\n" 1>&2
-				vmcLogin >"$VMCSESSION"
+				vmcLogin >"$SESSION"
 			fi
 		else
-			printf "File [$VMCSESSION] does not exist - authenticating...\n" 1>&2
-			vmcLogin >"$VMCSESSION"
+			printf "File [$SESSION] does not exist - authenticating...\n" 1>&2
+			vmcLogin >"$SESSION"
 		fi
 	fi
 }
