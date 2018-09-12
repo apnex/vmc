@@ -6,7 +6,7 @@ You can use `vmc-cli` via either:
 - **LOCAL Installation** - clone this repo and execute scripts directly
 
 ### 1: First, set up local SDDC parameters  
-Modify the `sddc.parameters` file to reflect the parameters for your lab.
+Modify the `sddc.parameters` file to reflect the parameters for your lab.  
 Configure the VMC Console `endpoint` with a newly generated **REFRESH_TOKEN** from your "My Account -> API Tokens -> Generate New Token".  
 Configure current working `org` with its **UUID** - all commands will be executed within this context.  
 You can get a list of orgs for your account by issuing the `org.list` command.  
