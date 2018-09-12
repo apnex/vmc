@@ -1,12 +1,17 @@
 #!/bin/bash
-DOMAIN=$(cat sddc.parameters | jq -r '.domain')
-VMCTOKEN=$(cat sddc.parameters | jq -r '.endpoints[] | select(.type=="vmc").token')
-VMCORG=$(cat sddc.parameters | jq -r '.endpoints[] | select(.type=="vmc").org')
-VMCONLINE=$(cat sddc.parameters | jq -r '.endpoints[] | select(.type=="vmc").online')
-VMCSESSION='state/vmc.csp-auth-token'
-if [ ! -d state ]; then
-	mkdir state;
+# check env and dirs
+VMCSTATE="${WORKDIR}/state"
+if [ ! -d ${VMCSTATE} ]; then
+	mkdir ${VMCSTATE}
 fi
+if [ -z ${SDDCDIR} ]; then
+	SDDCDIR=${WORKDIR}
+fi
+DOMAIN=$(cat ${SDDCDIR}/sddc.parameters | jq -r '.domain')
+VMCTOKEN=$(cat ${SDDCDIR}/sddc.parameters | jq -r '.endpoints[] | select(.type=="vmc").token')
+VMCORG=$(cat ${SDDCDIR}/sddc.parameters | jq -r '.endpoints[] | select(.type=="vmc").org')
+VMCONLINE=$(cat ${SDDCDIR}/sddc.parameters | jq -r '.endpoints[] | select(.type=="vmc").online')
+VMCSESSION="${VMCSTATE}/vmc.csp-auth-token"
 
 # Login with refresh-token and store Access token for future calls
 function vmcLogin {
@@ -25,7 +30,7 @@ function vmcSession {
 	local ONLINE=$VMCONLINE
 	if [[ "$ONLINE" == "true" ]]; then
 		if [ -f $SESSION ]; then
-			local RUNFIND="$(find ${SESSION} -cmin +10)"
+			local RUNFIND="$(find ${SESSION} -mmin +10)"
 			if [ -n "$RUNFIND" ]; then
 				printf "Session older than [600] seconds, reauthenticating...\n" 1>&2
 				vmcLogin >"$SESSION"
@@ -41,7 +46,7 @@ function vmcGet {
 	local URL=${1}
 	if [[ "$VMCONLINE" == "true" ]]; then
 		#STATE=$(getFile "${URL}")
-		STATE='state/sddc.list.json'
+		STATE="${VMCSTATE}/sddc.list.json"
 		RESPONSE=$(curl -s -w "%{http_code}" -X GET \
 			-H "Content-Type: application/json" \
 			-H "csp-auth-token: $(cat $VMCSESSION)" \
@@ -88,4 +93,46 @@ function vmcDelete {
 	fi
 	#work out state synch for deletes
 	printf "%s\n" "${RESULT}" | jq --tab .
+}
+
+function getFile {
+	local ENDPOINT=${1}
+	local STATE="state.default"
+	case "${ENDPOINT}" in
+		*"vm"*)
+			REGEX='vm/([^\/]+)/([^\/]+)$'
+			if [[ ${ENDPOINT} =~ $REGEX ]]; then
+				local ITEMID=${BASH_REMATCH[1]}
+				local ITEMCM=${BASH_REMATCH[2]}
+				STATE="state.vm.${ITEMID}.${ITEMCM}.json"
+			else
+				STATE="state.vm.json"
+			fi
+		;;
+		*"cluster"*)
+			STATE="state.cluster.json"
+		;;
+		*"network"*)
+			STATE="state.network.json"
+		;;
+		*"host"*)
+			STATE="state.host.json"
+		;;
+		*"datastore"*)
+			STATE="state.datastore.json"
+		;;
+	esac
+	printf "${VMCSTATE}/$STATE"
+}
+
+function buildURL {
+	local ENDPOINT="${1}"
+	local BASE="https://vmc.vmware.com/vmc/api/"
+	if [[ "$VMCONLINE" == "true" ]]; then
+		vmcSession
+		URL="$BASE$ENDPOINT"
+	else
+		URL=$(getFile "${ENDPOINT}")
+	fi
+	printf "$URL"
 }

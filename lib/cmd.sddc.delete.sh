@@ -1,6 +1,9 @@
 #!/bin/bash
-source drv.core
-source drv.vmc.client
+if [[ $0 =~ ^(.*)/[^/]+$ ]]; then
+	WORKDIR=${BASH_REMATCH[1]}
+fi
+source ${WORKDIR}/drv.core
+source ${WORKDIR}/drv.vmc.client
 
 ID=${1}
 if [[ -n "${ID}" ]]; then
