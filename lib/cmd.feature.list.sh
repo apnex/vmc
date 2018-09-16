@@ -5,22 +5,19 @@ fi
 
 PAYLOAD=$(${WORKDIR}/drv.feature.list.sh)
 read -r -d '' JQSPEC <<CONFIG
-	. |
+	(
 		["feature", "enabled"]
-		,["-----", "-----"]
-		,(
-			to_entries |
-				map(
-					[(.key),(.value | .applicable_status)]
-				)
-			| .[]
-		)
-	| @csv
+		| .,map(length * "-")
+	),(
+		to_entries | map(
+			[(.key),(.value | .applicable_status)]
+		) | .[]
+	) | @tsv
 CONFIG
 
 RAW=$1
 if [[ "$RAW" == "json" ]]; then
 	echo "$PAYLOAD" | jq --tab .
 else
-	echo "$PAYLOAD" | jq -r "$JQSPEC" | sed 's/"//g' | column -s ',' -t
+	echo "$PAYLOAD" | jq -r "$JQSPEC" | sed 's/"//g' | column -t -s $'\t'
 fi

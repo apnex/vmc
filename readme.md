@@ -27,7 +27,7 @@ For endpoint type `vmc` - `domain` and `dns` parameters will be ignored.
 ```
 
 ### 2: SETUP
-#### LOCAL Installation (setup)
+#### LOCAL Installation
 Ensure you have JQ and CURL installed.  
 Ensure you meet the pre-requisites to execute to scripts.  
 Currently, these have been tested on Centos / Ubuntu / MacOSX.  
@@ -59,7 +59,7 @@ Perform the following command to download the scripts - this will create a direc
 git clone https://github.com/apnex/vmc
 ```
 
-#### DOCKER (setup)
+#### DOCKER
 Docker Option 1: Daemon + Exec  
 ```shell
 docker rm -f vmc-cli 2>/dev/null
@@ -69,7 +69,7 @@ docker exec -t vmc-cli vmc <cmd>
 docker exec -t vmc-cli vmc <cmd>
 ```
 **Where:**
-- `<cmd>` is a command - enter `list` to view available commands or see **Usage** below  
+- `<cmd>` is a command - enter `list` to view available commands or see **USAGE** below  
 
 Docker Option 2: Single Run  
 ```shell
@@ -77,7 +77,7 @@ docker rm -f vmc-cli 2>/dev/null
 docker run -it --rm -v ${PWD}/sddc.parameters:/cfg/sddc.parameters apnex/vmc-cli <cmd>
 ```
 **Where:**
-- `<cmd>` is a command - enter `list` to view available commands or see **Usage** below
+- `<cmd>` is a command - enter `list` to view available commands or see **USAGE** below
 
 #### 3: PROFIT! (USAGE)
 Execute individual scripts as required.

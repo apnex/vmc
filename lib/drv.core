@@ -76,17 +76,34 @@ function ccyan {
 
 function isSuccess {
 	local STRING=${1}
-	REGEX='^(.*)([0-9]{3})$'
-	if [[ $STRING =~ $REGEX ]]; then
+	if [[ $STRING =~ ^(.*)([0-9]{3})$ ]]; then
 		local BODY=${BASH_REMATCH[1]}
 		local CODE=${BASH_REMATCH[2]}
 	fi
+	printf "[$(ccyan "${CODE}")] - " 1>&2
 	if [[ $CODE =~ 2..$ ]]; then
-		printf "[$(ccyan "${CODE}")] - SUCCESS\n" 1>&2
+		printf "SUCCESS\n" 1>&2
 	else
-		printf "[$(ccyan "${CODE}")] - ERROR\n" 1>&2
+		printf "ERROR\n" 1>&2
 	fi
 	printf "%s\n" "${BODY}"
+}
+
+function getFile {
+	local ENDPOINT=${1}
+	local BASE=${2}
+	if [[ -n $BASE ]]; then
+		REGEX="^($BASE)"
+		if [[ $ENDPOINT =~ $REGEX ]]; then
+			ENDPOINT=${ENDPOINT#*"${BASH_REMATCH[1]}"}
+		fi
+	fi
+	while [[ $ENDPOINT =~ ([^/]+) ]]; do
+		ENDPOINT=${ENDPOINT#*"${BASH_REMATCH[1]}"}
+		STATE+=".${BASH_REMATCH[1]}"
+	done
+	STATE+=".json"
+	printf "${STATE}"
 }
 
 function getThumbprint {

@@ -1,5 +1,4 @@
 #!/bin/bash
-# check env and dirs
 VMCSTATE="${WORKDIR}/state"
 if [ ! -d ${VMCSTATE} ]; then
 	mkdir ${VMCSTATE}
@@ -12,6 +11,7 @@ VMCTOKEN=$(cat ${SDDCDIR}/sddc.parameters | jq -r '.endpoints[] | select(.type==
 VMCORG=$(cat ${SDDCDIR}/sddc.parameters | jq -r '.endpoints[] | select(.type=="vmc").org')
 VMCONLINE=$(cat ${SDDCDIR}/sddc.parameters | jq -r '.endpoints[] | select(.type=="vmc").online')
 VMCSESSION="${VMCSTATE}/vmc.csp-auth-token"
+VMCBASE="https://vmc.vmware.com/vmc/api/"
 
 # Login with refresh-token and store Access token for future calls
 function vmcLogin {
@@ -19,7 +19,7 @@ function vmcLogin {
 	AUTH_RESPONSE=$(curl -s -X POST \
 		-H "accept: application/json" \
 		-H "content-type: application/x-www-form-urlencoded" \
-		-d "refresh_token=$VMCTOKEN" \
+		-d "refresh_token=${VMCTOKEN}" \
 	$URL)
 	ACCESS_TOKEN=$(echo $AUTH_RESPONSE | awk -F '"access_token":"' '{print $2}' | awk -F '","' '{print $1}')
 	printf "%s\n" "${ACCESS_TOKEN}"
@@ -45,11 +45,11 @@ function vmcSession {
 function vmcGet {
 	local URL=${1}
 	if [[ "$VMCONLINE" == "true" ]]; then
-		#STATE=$(getFile "${URL}")
-		STATE="${VMCSTATE}/sddc.list.json"
+		local FILE=$(getFile "${URL}" "${VMCBASE}")
+		STATE="${VMCSTATE}/vmc${FILE}"
 		RESPONSE=$(curl -s -w "%{http_code}" -X GET \
 			-H "Content-Type: application/json" \
-			-H "csp-auth-token: $(cat $VMCSESSION)" \
+			-H "csp-auth-token: $(cat ${VMCSESSION})" \
 		"$URL" 2>/dev/null)
 		RESULT=$(isSuccess "${RESPONSE}")
 	else
@@ -67,7 +67,7 @@ function vmcPost {
 	if [[ "$VMCONLINE" == "true" ]]; then
 		RESPONSE=$(curl -s -w "%{http_code}" -X POST \
 			-H "Content-Type: application/json" \
-			-H "csp-auth-token: $(cat $VMCSESSION)" \
+			-H "csp-auth-token: $(cat ${VMCSESSION})" \
 			-d "$BODY" \
 		"$URL" 2>/dev/null)
 		RESULT=$(isSuccess "${RESPONSE}")
@@ -84,7 +84,7 @@ function vmcDelete {
 		#STATE=$(getFile "${URL}")
 		RESPONSE=$(curl -s -w "%{http_code}" -G -X DELETE \
 			-H "Content-Type: application/json" \
-			-H "csp-auth-token: $(cat $VMCSESSION)" \
+			-H "csp-auth-token: $(cat ${VMCSESSION})" \
 			--data-urlencode "$BODY" \
 		"$URL" 2>/dev/null)
 		RESULT=$(isSuccess "${RESPONSE}")
@@ -95,36 +95,6 @@ function vmcDelete {
 	printf "%s\n" "${RESULT}" | jq --tab .
 }
 
-function getFile {
-	local ENDPOINT=${1}
-	local STATE="state.default"
-	case "${ENDPOINT}" in
-		*"vm"*)
-			REGEX='vm/([^\/]+)/([^\/]+)$'
-			if [[ ${ENDPOINT} =~ $REGEX ]]; then
-				local ITEMID=${BASH_REMATCH[1]}
-				local ITEMCM=${BASH_REMATCH[2]}
-				STATE="state.vm.${ITEMID}.${ITEMCM}.json"
-			else
-				STATE="state.vm.json"
-			fi
-		;;
-		*"cluster"*)
-			STATE="state.cluster.json"
-		;;
-		*"network"*)
-			STATE="state.network.json"
-		;;
-		*"host"*)
-			STATE="state.host.json"
-		;;
-		*"datastore"*)
-			STATE="state.datastore.json"
-		;;
-	esac
-	printf "${VMCSTATE}/$STATE"
-}
-
 function buildURL {
 	local ENDPOINT="${1}"
 	local BASE="https://vmc.vmware.com/vmc/api/"
@@ -132,7 +102,8 @@ function buildURL {
 		vmcSession
 		URL="$BASE$ENDPOINT"
 	else
-		URL=$(getFile "${ENDPOINT}")
+		local FILE=$(getFile "${ENDPOINT}")
+		URL="${VMCSTATE}/vmc${FILE}"
 	fi
 	printf "$URL"
 }
