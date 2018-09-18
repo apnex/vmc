@@ -13,10 +13,8 @@ fi
 # detect available cmds
 commands() {
 	echo "-- [COMMANDS] --"
-	REGEX='cmd.(.+).sh'
 	for FILE in ${WORKDIR}/cmd*.sh; do
-		#[ -e "$FILE" ] || continue
-		if [[ $FILE =~ $REGEX ]]; then
+		if [[ $FILE =~ cmd[.](.+)[.]sh ]]; then
 			echo "${BASH_REMATCH[1]}"
 		fi
 	done
@@ -92,6 +90,7 @@ function isSuccess {
 function getFile {
 	local ENDPOINT=${1}
 	local BASE=${2}
+	local STATE
 	if [[ -n $BASE ]]; then
 		REGEX="^($BASE)"
 		if [[ $ENDPOINT =~ $REGEX ]]; then
@@ -108,7 +107,7 @@ function getFile {
 
 function getThumbprint {
 	local HOST="${1}"
-	PAYLOAD=$(echo -n | openssl s_client -connect "${HOST}" 2>/dev/null)
+	PAYLOAD=$(echo -n | timeout 3 openssl s_client -connect "${HOST}" 2>/dev/null)
 	PRINT=$(echo "$PAYLOAD" | openssl x509 -noout -fingerprint -sha256)
 	REGEX='^(.*)=(([0-9A-Fa-f]{2}[:])+([0-9A-Fa-f]{2}))$'
 	if [[ $PRINT =~ $REGEX ]]; then

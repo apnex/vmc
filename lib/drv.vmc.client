@@ -1,10 +1,15 @@
 #!/bin/bash
-VMCSTATE="${WORKDIR}/state"
-if [ ! -d ${VMCSTATE} ]; then
-	mkdir ${VMCSTATE}
+if [ -z ${WORKDIR} ]; then
+	if [[ $0 =~ ^(.*)/[^/]+$ ]]; then
+		WORKDIR=${BASH_REMATCH[1]}
+	fi
 fi
 if [ -z ${SDDCDIR} ]; then
 	SDDCDIR=${WORKDIR}
+fi
+VMCSTATE="${WORKDIR}/state"
+if [ ! -d ${VMCSTATE} ]; then
+	mkdir ${VMCSTATE}
 fi
 DOMAIN=$(cat ${SDDCDIR}/sddc.parameters | jq -r '.domain')
 VMCTOKEN=$(cat ${SDDCDIR}/sddc.parameters | jq -r '.endpoints[] | select(.type=="vmc").token')
@@ -13,33 +18,28 @@ VMCONLINE=$(cat ${SDDCDIR}/sddc.parameters | jq -r '.endpoints[] | select(.type=
 VMCSESSION="${VMCSTATE}/vmc.csp-auth-token"
 VMCBASE="https://vmc.vmware.com/vmc/api/"
 
-# Login with refresh-token and store Access token for future calls
-function vmcLogin {
-	URL="https://console.cloud.vmware.com/csp/gateway/am/api/auth/api-tokens/authorize"
-	AUTH_RESPONSE=$(curl -s -X POST \
-		-H "accept: application/json" \
-		-H "content-type: application/x-www-form-urlencoded" \
-		-d "refresh_token=${VMCTOKEN}" \
-	$URL)
-	ACCESS_TOKEN=$(echo $AUTH_RESPONSE | awk -F '"access_token":"' '{print $2}' | awk -F '","' '{print $1}')
-	printf "%s\n" "${ACCESS_TOKEN}"
+function isSuccess {
+	local STRING=${1}
+	if [[ $STRING =~ ^(.*)([0-9]{3})$ ]]; then
+		local BODY=${BASH_REMATCH[1]}
+		local CODE=${BASH_REMATCH[2]}
+	fi
+	printf "[$(ccyan "${CODE}")] - " 1>&2
+	if [[ $CODE =~ 2..$ ]]; then
+		printf "SUCCESS\n" 1>&2
+	else
+		printf "ERROR\n" 1>&2
+	fi
+	printf "%s\n" "${BODY}"
 }
 
-function vmcSession {
-	local SESSION=$VMCSESSION
-	local ONLINE=$VMCONLINE
-	if [[ "$ONLINE" == "true" ]]; then
-		if [ -f $SESSION ]; then
-			local RUNFIND="$(find ${SESSION} -mmin +10)"
-			if [ -n "$RUNFIND" ]; then
-				printf "Session older than [600] seconds, reauthenticating...\n" 1>&2
-				vmcLogin >"$SESSION"
-			fi
-		else
-			printf "File [$SESSION] does not exist - authenticating...\n" 1>&2
-			vmcLogin >"$SESSION"
-		fi
+function getCode {
+	local STRING=${1}
+	if [[ $STRING =~ ^(.*)([0-9]{3})$ ]]; then
+		local BODY=${BASH_REMATCH[1]}
+		local CODE=${BASH_REMATCH[2]}
 	fi
+	printf "%s\n" "${CODE}"
 }
 
 function vmcGet {
@@ -95,15 +95,52 @@ function vmcDelete {
 	printf "%s\n" "${RESULT}" | jq --tab .
 }
 
+function vmcLogin {
+	local URL="https://console.cloud.vmware.com/csp/gateway/am/api/auth/api-tokens/authorize"
+	local RESPONSE=$(curl -s -w "%{http_code}" -X POST \
+		-H "accept: application/json" \
+		-H "content-type: application/x-www-form-urlencoded" \
+		-d "refresh_token=${VMCTOKEN}" \
+	$URL)
+	local RESULT=$(isSuccess "${RESPONSE}")
+	local CODE=$(getCode "${RESPONSE}")
+	if [[ $CODE =~ 2..$ ]]; then
+		ACCESS_TOKEN=$(echo $RESULT | jq -r '.access_token')
+		printf "%s\n" "${ACCESS_TOKEN}"
+	fi
+}
+
+function vmcSession {
+	local SESSION=$VMCSESSION
+	local ONLINE=$VMCONLINE
+	if [[ "$ONLINE" == "true" ]]; then
+		local RUNFIND="$(find ${SESSION} -mmin -10 2>/dev/null)"
+		if [[ -z ${RUNFIND} ]]; then
+			printf "No valid session found, authenticating... " 1>&2
+			local LOGIN=$(vmcLogin)
+			if [[ -n ${LOGIN} ]]; then
+				echo "${LOGIN}" >"$SESSION"
+			fi
+		fi
+	fi
+	printf "%s\n" "$(cat "${SESSION}" 2>/dev/null)"
+}
+
 function buildURL {
 	local ENDPOINT="${1}"
-	local BASE="https://vmc.vmware.com/vmc/api/"
-	if [[ "$VMCONLINE" == "true" ]]; then
-		vmcSession
-		URL="$BASE$ENDPOINT"
+	local BASE="${VMCBASE}"
+	local STATE="${VMCSTATE}"
+	local ONLINE="${VMCONLINE}"
+	if [[ "$ONLINE" == "true" ]]; then
+		local SUCCESS=$(vmcSession)
+		if [[ -n ${SUCCESS} ]]; then
+			URL="$BASE$ENDPOINT"
+		else
+			URL="" #failed to obtain valid session
+		fi
 	else
-		local FILE=$(getFile "${ENDPOINT}")
-		URL="${VMCSTATE}/vmc${FILE}"
+		local FILE=$(getFile "${ENDPOINT}" "${BASE}")
+		URL="${STATE}/vmc${FILE}"
 	fi
 	printf "$URL"
 }
